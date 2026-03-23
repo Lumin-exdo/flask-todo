@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install:*)",
+      "Bash(python -m pytest test_app.py -v)",
+      "Bash(pip show:*)",
+      "Bash(\"C:/Users/Lenovo/AppData/Local/Programs/Python/Python310/python.exe\" -m pytest test_app.py -v)",
+      "Bash(\"C:/Users/Lenovo/AppData/Local/Programs/Python/Python310/python.exe\" -m pip install Flask-Login -q)"
+    ]
+  }
+}
