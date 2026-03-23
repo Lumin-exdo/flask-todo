@@ -1,43 +1,123 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Todo App</title>
-
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
     <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+    <style>
+        /* Red left border for overdue tasks */
+        .overdue-segment {
+            border-left: 5px solid #db2828 !important;
+        }
+    </style>
 </head>
 
 <body>
-    <div style="margin-top: 50px;" class="ui container">
-        <h1 class="ui center aligned header">To Do App</h1>
+    <div style="margin-top: 50px; margin-bottom: 50px;" class="ui container">
+        <h1 class="ui center aligned header">Todo App</h1>
 
-        <form class="ui form" action="/add" method="post">
-            <div class="field">
-                <label>Todo Title</label>
-                <input type="text" name="title" placeholder="Enter Todo..."><br>
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="ui {{ 'red' if category == 'error' else 'green' }} message" style="margin-bottom:12px;">
+                <i class="close icon" onclick="this.parentElement.style.display='none'" style="cursor:pointer;float:right;"></i>
+                {{ message }}
             </div>
-            <button class="ui blue button" type="submit">Add</button>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <!-- Add todo form -->
+        <form class="ui form" action="/add" method="post">
+            <div class="fields" style="align-items:flex-end;">
+                <div class="eight wide field">
+                    <label>任务标题</label>
+                    <input type="text" name="title" placeholder="输入任务内容...">
+                </div>
+                <div class="three wide field">
+                    <label>优先级</label>
+                    <select class="ui dropdown" name="priority">
+                        <option value="高">🔴 高</option>
+                        <option value="中" selected>🟡 中</option>
+                        <option value="低">🟢 低</option>
+                    </select>
+                </div>
+                <div class="three wide field">
+                    <label>截止日期（可选）</label>
+                    <input type="date" name="due_date">
+                </div>
+                <div class="two wide field">
+                    <button class="ui blue fluid button" type="submit">添加</button>
+                </div>
+            </div>
         </form>
 
-        <hr>
+        <div class="ui divider"></div>
 
+        <!-- Todo list (sorted by priority in Python) -->
         {% for todo in todo_list %}
-        <div class="ui segment">
-            <p class="ui big header">{{todo.id }} | {{ todo.title }}</p>
+        <div class="ui segment {{ 'overdue-segment' if todo.is_overdue() else '' }}">
 
-            {% if todo.complete == False %}
-            <span class="ui gray label">Not Complete</span>
+            <!-- Title row -->
+            <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+                <span class="ui big header" style="margin:0;">
+                    {% if todo.complete %}
+                    <s style="color:#aaa;">{{ todo.title }}</s>
+                    {% else %}
+                    {{ todo.title }}
+                    {% endif %}
+                </span>
+
+                <!-- Priority badge -->
+                {% if todo.priority == '高' %}
+                <span class="ui red label">🔴 高优先级</span>
+                {% elif todo.priority == '中' %}
+                <span class="ui yellow label">🟡 中优先级</span>
+                {% else %}
+                <span class="ui teal label">🟢 低优先级</span>
+                {% endif %}
+
+                <!-- Overdue badge -->
+                {% if todo.is_overdue() %}
+                <span class="ui red label">⚠ 已过期</span>
+                {% endif %}
+            </div>
+
+            <!-- Meta row -->
+            <div style="margin-bottom:10px; font-size:0.9em; color:#666;">
+                <span>ID: {{ todo.id }}</span>
+                &nbsp;|&nbsp;
+                <span>创建：{{ todo.created_at.strftime('%Y-%m-%d') }}</span>
+                {% if todo.due_date %}
+                &nbsp;|&nbsp;
+                <span style="color:{{ '#db2828' if todo.is_overdue() else 'inherit' }};">
+                    截止：{{ todo.due_date.strftime('%Y-%m-%d') }}
+                </span>
+                {% endif %}
+            </div>
+
+            <!-- Status + action buttons -->
+            {% if todo.complete %}
+            <span class="ui green label">✔ 已完成</span>
             {% else %}
-            <span class="ui green label">Completed</span>
+            <span class="ui grey label">○ 未完成</span>
             {% endif %}
 
-            <a class="ui blue button" href="/update/{{ todo.id }}">Update</a>
-            <a class="ui red button" href="/delete/{{ todo.id }}">Delete</a>
+            <a class="ui blue button" href="/update/{{ todo.id }}">
+                {% if todo.complete %}标记未完成{% else %}标记完成{% endif %}
+            </a>
+            <a class="ui red button" href="/delete/{{ todo.id }}">删除</a>
         </div>
         {% endfor %}
+
+        {% if not todo_list %}
+        <div class="ui info message">暂无任务，添加一个吧！</div>
+        {% endif %}
+
     </div>
 </body>
 
